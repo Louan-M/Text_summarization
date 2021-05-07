@@ -57,7 +57,7 @@ This project is carried out by:
 
 from Theano 2.27 promotion @BeCode.
 
-I would like to thank **Jean-Jo Adjizian from Algorhythm** for providing the opportunity to work on the use-case.
+I would like to thank **Jean-Joseph Adjizian from Algorhythm** for providing the opportunity to work on the use-case.
 
 ## Clone/Fork Repository
   - If you wish to clone/fork this repository, you can just click on the repository, then click the Clone/fork button and follow the instructions.

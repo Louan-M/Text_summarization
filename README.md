@@ -53,7 +53,7 @@ ________________________________________________________________________________
 
 ### Authors
 This project is carried out by: 
-- **Louan Mastrogiovanni** 
+**Louan Mastrogiovanni** 
 
 from Theano 2.27 promotion @BeCode.
 

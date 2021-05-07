@@ -51,7 +51,7 @@ ________________________________________________________________________________
 
 
 
-### Authors
+### Author(s)
 This project is carried out by: 
 **Louan Mastrogiovanni** 
 

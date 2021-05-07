@@ -1,3 +1,6 @@
+import torch, gc
+gc.collect()
+torch.cuda.empty_cache()
 import streamlit as st 
 import smart_open
 import time
@@ -17,9 +20,8 @@ from sumy.summarizers.lsa import LsaSummarizer
 from sumy.summarizers.luhn import LuhnSummarizer
 from sumy.summarizers.text_rank import TextRankSummarizer
 
-# Transformers Pkg
-#from transformers import pipeline
-#summarizer = pipeline("summarization")
+from transformers import pipeline
+summarizer = pipeline("summarization")
 
 
 
@@ -70,31 +72,28 @@ def Luhn_summarizer(docx):
 
 
 # Fetch Text From Url
-@st.cache
-def get_text(raw_url):
-	page = urlopen(raw_url)
-	soup = BeautifulSoup(page)
-	fetched_text = ' '.join(map(lambda p:p.text,soup.find_all('p')))
-	return fetched_text
+def get_text(url):
+	
+	from newspaper import fulltext
+	import requests
+	url = str(url)
+	text = fulltext(requests.get(url).text)
 
-
-@st.cache(allow_output_mutation=True)
-def analyze_text(text):
-	return nlp(text)
+	return text
 
 
 def main():
-	"""Summaryzer Streamlit App"""
+	"""Summarizer Streamlit App"""
 
 	st.title("Summarizer")
 
-	activities = ["Summarize", "Evaluation", "Text summarization from URL"]
+	activities = ["Summarize from Text","Summarize from URL", "Evaluation"]
 	choice = st.sidebar.selectbox("Select Activity",activities)
 
-	if choice == 'Summarize':
+	if choice == 'Summarize from Text':
 		st.subheader("Summarize Document")
 		raw_text = st.text_area("Enter Text Here","Type Here")
-		summarizer_type = st.selectbox("Summarizer Type",["Lsa","Lex Rank", "Luhn", "Text Rank", "Transformers"])
+		summarizer_type = st.selectbox("Summarizer Type",["Lsa","Lex Rank", "Luhn", "Text Rank"])
 		if st.button("Summarize"):
 			import time
 			start_time = time.monotonic()
@@ -107,9 +106,6 @@ def main():
 
 			elif summarizer_type == "Text Rank":
 				summary_result = TextRank_summarizer(raw_text)
-			
-			elif summarizer_type == "Transformers":
-				summary_result = transformers(raw_text)
 				
 			else:
 					summary_result = Lsa_summarizer(raw_text)
@@ -117,22 +113,15 @@ def main():
 			st.write(summary_result)
 			st.write('Execution time (seconds): ', time.monotonic() - start_time)
 
-	if choice == 'Text summarization from URL':
+	if choice == 'Summarize from URL':
 		st.subheader("Analysis on Text From URL")
-		raw_url = st.text_input("Enter URL Here","Type here")
-		text_preview_length = st.slider("Length to Preview",50,100)
-		if st.button("Analyze"):
-			if raw_url != "Type here":
-				result = get_text(raw_url)
-				len_of_full_text = len(result)
-				len_of_short_text = round(len(result)/text_preview_length)
-				st.success("Length of Full Text::{}".format(len_of_full_text))
-				st.success("Length of Short Text::{}".format(len_of_short_text))
-				st.info(result[:len_of_short_text])
-				summarized_docx = TextRank_summarizer(result)
-				docx = nlp(summarized_docx)
-				html = displacy.render(docx,style="ent")
-				html = html.replace("\n\n","\n")
+		url = st.text_input("Enter URL Here","Type here")
+		if st.button("Summarize"):
+			if url != "Type here":
+				result = get_text(url)
+				len_of_text = len(result)
+				st.success("Length of Full Text::{}".format(len_of_text))
+				summarized_docx = LexRank_summarizer(result)
 				st.write(summarized_docx)
 	
 	if choice == 'Evaluation':
@@ -179,14 +168,12 @@ def main():
 
 				st.write('LexRank:')
 				st.write(LexRank)
-				st.text("")
 				rouge_score = rouge.get_scores(LexRank, summary, avg=True)
 				st.write('Rouge scores:')
 				st.write(rouge_score)
 				st.markdown('**Length of the summary: **')
 				length_summary = len(LexRank)
 				st.write(length_summary, "words")
-				st.text("")
 				st.text("")
 				st.write(f'Execution time: {execution_time} seconds' )
 				st.text("")
@@ -203,14 +190,12 @@ def main():
 				st.text("")
 				st.write('Luhn:')
 				st.write(Luhn)
-				st.text("")
 				rouge_score = rouge.get_scores(Luhn, summary, avg=True)
 				st.write('Rouge scores:')
 				st.write(rouge_score)
 				st.markdown('**Length of the summary: **')
 				length_summary = len(Luhn)
 				st.write(length_summary, "words")
-				st.text("")
 				st.text("")
 				st.write(f'Execution time: {execution_time} seconds' )
 				st.text("")
@@ -227,7 +212,6 @@ def main():
 				st.text("")
 				st.write('TextRank:')
 				st.write(TextRank)
-				st.text("")
 				rouge_score = rouge.get_scores(TextRank, summary, avg=True)
 				st.write('Rouge scores:')
 				st.write(rouge_score)
@@ -236,7 +220,6 @@ def main():
 				st.markdown('**Length of the summary: **')
 				length_summary = len(TextRank)
 				st.write(length_summary, "words")
-				st.text("")
 				st.text("")
 				st.write(f'Execution time: {execution_time} seconds' )
 				st.text("")
@@ -250,9 +233,7 @@ def main():
 
 
 				st.write('Lsa:')
-				st.write(Lsa)
-				st.text("")
-				st.text("")
+				st.write(Lsa)	
 				rouge_score = rouge.get_scores(Lsa, summary, avg=True)
 				st.write('Rouge scores:')
 				st.write(rouge_score)
@@ -262,15 +243,11 @@ def main():
 				length_summary = len(Lsa)
 				st.write(length_summary, "words")
 				st.text("")
-				st.text("")
 				st.write(f'Execution time: {execution_time} seconds' )
 				st.text("")
 				st.text("")
 				
 				st.write('BertSum:')
-				st.write(Lsa)
-				st.text("")
-				st.text("")
 				start = timeit.default_timer()
 
 				result = model(raw_text, min_length=30,max_length=300)
@@ -289,6 +266,31 @@ def main():
 				length_summary = len(summary_bert)
 				st.write(length_summary, "words")
 				st.text("")
+				st.write(f'Execution time: {execution_time} seconds' )
+				st.text("")
+				st.text("")
+
+
+
+				st.write('BART (Abstractive approach):')
+				st.text("")
+				st.text("")
+				start = timeit.default_timer()
+				result = summarizer(raw_text, do_sample=False)[0]['summary_text']
+				stop = timeit.default_timer()
+				execution_time = stop - start
+				summary_bart = "".join(result)
+				st.write(summary_bart)
+				st.text("")
+				st.text("")
+				rouge_score = rouge.get_scores(summary_bart, summary, avg=True)
+				st.write('Rouge scores:')
+				st.write(rouge_score)
+				st.text("")
+				st.text("")
+				st.markdown('**Length of the summary: **')
+				length_summary = len(summary_bart)
+				st.write(length_summary, "words")
 				st.text("")
 				st.write(f'Execution time: {execution_time} seconds' )
 				st.text("")

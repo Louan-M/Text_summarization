@@ -31,14 +31,13 @@ Text_summarization
 
 ## Installation
 
-- virtual environment:      python 3.7
-- used editor:              jupyter notebook
-- pandas                    1.2.3
-- numpy                     1.19.2
-- matplotlib                3.3.4
-- scikit-learn              0.24.1
-- imbalanced-learn          0.8.0
-- pickleshare               0.7.5
+- virtual environnement: python==3.7
+- spacy==3.0.6
+- gensim==4.0.1
+- transformers==4.5.1
+- streamlit==0.81.0
+- sumy==0.8.1
+- rouge==1.0.0
 
 
 Follow these instructions to install the required libraries: on terminal
